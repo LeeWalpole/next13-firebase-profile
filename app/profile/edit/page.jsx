@@ -1,5 +1,4 @@
 "use client";
-import { auth, db } from "../../../src/firebase/config";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -12,15 +11,18 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../../../src/firebase/config";
+import ImageUpload from "../../components/ImageUpload";
 
 export default function EditProfile() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [notification, setNotification] = useState("");
   const [user, setUser] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
   const router = useRouter();
 
-  // Check if user is authenticated
+  // Check if user is authenticated and redirect to login if not
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -35,7 +37,7 @@ export default function EditProfile() {
     };
   }, [router]);
 
-  // Fetch user data when the user state changes
+  // Fetch user data from Firestore
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
@@ -44,6 +46,7 @@ export default function EditProfile() {
           if (userDoc.exists()) {
             setDisplayName(userDoc.data().displayName);
             setUsername(userDoc.data().username);
+            setImageUrl(userDoc.data().profile_image); // Get the profile image URL from Firestore
           }
         } catch (error) {
           console.error("Error fetching user data:", error.message);
@@ -54,7 +57,12 @@ export default function EditProfile() {
     fetchUserData();
   }, [user]);
 
-  // Function to handle profile submission
+  // Handle the image upload and set the image URL in state
+  const handleImageUpload = (url) => {
+    setImageUrl(url);
+  };
+
+  // Handle form submission
   const submitProfile = async (e) => {
     e.preventDefault();
 
@@ -69,15 +77,14 @@ export default function EditProfile() {
           {
             displayName,
             username,
+            profile_image: imageUrl, // Save the profile image URL in Firestore
           },
           { merge: true }
         );
 
-        // Show 'Updated' message
-        setNotification("Updated");
+        setNotification("Profile updated successfully.");
         setTimeout(() => setNotification(""), 3000);
       } else {
-        // Show 'This username is already taken' message
         setNotification("This username is already taken.");
         setTimeout(() => setNotification(""), 3000);
       }
@@ -86,15 +93,18 @@ export default function EditProfile() {
     }
   };
 
-  // Function to handle back button click
+  // Handle "Back" button click
   const handleBack = () => {
     router.back();
   };
-
   return (
     <div>
       <h1>Edit Profile</h1>
       <form onSubmit={submitProfile}>
+        <br />
+        {/* Render the ImageUpload component with currentImage prop set to imageUrl */}
+        <ImageUpload onUpload={handleImageUpload} currentImage={imageUrl} />
+        <br />
         <label>
           Display Name:
           <input
@@ -114,7 +124,6 @@ export default function EditProfile() {
             required
           />
         </label>
-        <br />
         <button type="submit">Update</button>
         <button type="button" onClick={handleBack}>
           Back
@@ -127,7 +136,6 @@ export default function EditProfile() {
             top: "20px",
             right: "20px",
             padding: "10px",
-
             background: "lightgray",
             borderRadius: "5px",
           }}
