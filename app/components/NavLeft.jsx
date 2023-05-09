@@ -30,6 +30,21 @@ const NavLeft = () => {
               />
             </Link>
           </li>
+
+          <li>
+            <Link href="/join">1. Join</Link>
+          </li>
+          <li>
+            <Link href="/profile/create">2. Create Profile</Link>
+          </li>
+
+          <li>
+            <Link href="/profile">3. Profile (Welcome)</Link>
+          </li>
+
+          <li>
+            <Link href="/profile/edit/">4. Edit Profile</Link>
+          </li>
           <li className={pathname == "/" ? "active-nav-left" : ""}>
             <Link href="/">
               <span>
@@ -131,22 +146,11 @@ const NavLeft = () => {
               <span>Favorites</span>
             </Link>
           </li>
-          <li>
-            <Link href="/join">Join</Link>
-          </li>
+
           <li>
             <Link href="/dashboard">Dashboard</Link>
           </li>
-          <li>
-            <Link href="/profile">Profile</Link>
-          </li>
 
-          <li>
-            <Link href="/profile/edit/">Edit Profile</Link>
-          </li>
-          <li>
-            <Link href="/profile/create">Create Profile</Link>
-          </li>
           <li onClick={() => toggleModal("modal-1")}>
             <span>
               <svg

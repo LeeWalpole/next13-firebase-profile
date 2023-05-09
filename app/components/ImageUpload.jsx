@@ -96,7 +96,11 @@ export default function ImageUpload({ onUpload, currentImage }) {
         )}
       </label>
       <button onClick={handleImageUpload}>
-        {image ? (notification ? "Uploaded" : "Uploading...") : "Select image"}
+        {image
+          ? notification
+            ? "Uploaded"
+            : "Uploading..."
+          : "Change Profile Pic"}
       </button>
       {notification && (
         <div
