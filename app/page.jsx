@@ -1,59 +1,45 @@
 "use client";
-import { auth, provider, db } from "../src/firebase/config";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
-import { useState } from "react";
-import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { auth, db } from "../src/firebase/config";
+import { doc, getDoc } from "firebase/firestore";
+import { AuthButton } from "./components/AuthButton";
 
-export default function Join() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function Dashboard() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const registerWithEmail = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      await addDoc(collection(db, "users"), { uid: userCredential.user.uid });
-      router.push("/create-profile");
-    } catch (error) {
-      console.error("Error signing up:", error.message);
-    }
-  };
+        if (!userDoc.exists || !userDoc.data() || !userDoc.data().username) {
+          router.push("/profile/create/");
+        } else {
+          setUser(userDoc.data());
+          setLoading(false);
+        }
+      } else {
+        router.push("/join");
+      }
+    });
 
-  const registerWithGoogle = async () => {
-    try {
-      const userCredential = await signInWithPopup(auth, provider);
-      await addDoc(collection(db, "users"), { uid: userCredential.user.uid });
-      router.push("/create-profile");
-    } catch (error) {
-      console.error("Error signing up with Google:", error.message);
-    }
-  };
+    return () => unsubscribe();
+  }, []);
+
+  // Display the loading indicator while waiting for the user data to load
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
-      <h1>Home</h1>
-      <form onSubmit={registerWithEmail}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Sign Up with Email</button>
-      </form>
-      <button onClick={registerWithGoogle}>Sign Up with Google</button>
+      <h1>Homne</h1>
+      <h1>Hello {user.username}!</h1>
+      <p>This is your {user.email}</p>
+      <AuthButton />
     </div>
   );
 }

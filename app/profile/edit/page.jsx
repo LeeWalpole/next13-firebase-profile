@@ -16,10 +16,11 @@ import { onAuthStateChanged } from "firebase/auth";
 export default function EditProfile() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
+  const [notification, setNotification] = useState("");
   const [user, setUser] = useState(null);
   const router = useRouter();
 
+  // Check if user is authenticated
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -34,6 +35,7 @@ export default function EditProfile() {
     };
   }, [router]);
 
+  // Fetch user data when the user state changes
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
@@ -52,6 +54,7 @@ export default function EditProfile() {
     fetchUserData();
   }, [user]);
 
+  // Function to handle profile submission
   const submitProfile = async (e) => {
     e.preventDefault();
 
@@ -70,13 +73,22 @@ export default function EditProfile() {
           { merge: true }
         );
 
-        router.push("/dashboard");
+        // Show 'Updated' message
+        setNotification("Updated");
+        setTimeout(() => setNotification(""), 3000);
       } else {
-        setError("This username is already taken.");
+        // Show 'This username is already taken' message
+        setNotification("This username is already taken.");
+        setTimeout(() => setNotification(""), 3000);
       }
     } catch (error) {
       console.error("Error updating profile:", error.message);
     }
+  };
+
+  // Function to handle back button click
+  const handleBack = () => {
+    router.back();
   };
 
   return (
@@ -104,8 +116,25 @@ export default function EditProfile() {
         </label>
         <br />
         <button type="submit">Update</button>
+        <button type="button" onClick={handleBack}>
+          Back
+        </button>
       </form>
-      {error && <p>{error}</p>}
+      {notification && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            padding: "10px",
+
+            background: "lightgray",
+            borderRadius: "5px",
+          }}
+        >
+          {notification}
+        </div>
+      )}
     </div>
   );
 }

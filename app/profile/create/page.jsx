@@ -11,13 +11,14 @@ import {
   getDocs,
   getDoc,
 } from "firebase/firestore";
+import { useAuth } from "../../../src/hooks/useAuth";
 import { onAuthStateChanged } from "firebase/auth";
 
 export default function CreateProfile() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
-  const [user, setUser] = useState(null);
+  const { user, setUser } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
