@@ -1,45 +1,49 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import placeholderImage from "../../public/placeholder.png";
-import { useProfileImage } from "../../src/hooks/useProfileImage";
-import { useImageUpload } from "../../src/hooks/useImageUpload";
 
-export default function ImageUpload({ onUpload, currentImage }) {
-  const [image, setImage] = useState(null);
+export default function ImageUpload({ onImageSelect, currentImageUrl }) {
   const [preview, setPreview] = useState(null);
-  const [notification, setNotification] = useState("");
-  const { profileImage, setProfileImageTimestamp } = useProfileImage();
-  const { handleImageUpload } = useImageUpload((downloadURL) => {
-    onUpload(downloadURL);
-    setProfileImageTimestamp(Date.now());
-    setNotification("Profile image updated.");
-    setTimeout(() => setNotification(""), 3000);
-  });
+
+  useEffect(() => {
+    if (currentImageUrl) {
+      setPreview(currentImageUrl);
+    }
+  }, [currentImageUrl]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    processFile(file);
+  };
+
+  const processFile = (file) => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
       };
       reader.readAsDataURL(file);
-      setImage(file);
+      if (typeof onImageSelect === "function") {
+        onImageSelect(file);
+      }
+    } else {
+      setPreview(null);
+      if (typeof onImageSelect === "function") {
+        onImageSelect(null);
+      }
     }
   };
 
-  const handleButtonClick = async (e) => {
-    e.preventDefault();
-    setNotification("Uploading image...");
-    const success = await handleImageUpload(image);
-    if (!success) {
-      setNotification("Upload failed.");
+  const handleRemoveImage = () => {
+    setPreview(null);
+    if (typeof onImageSelect === "function") {
+      onImageSelect(null);
     }
   };
 
   return (
-    <div>
+    <div style={{ position: "relative" }}>
       <input
         type="file"
         accept="image/*"
@@ -49,17 +53,18 @@ export default function ImageUpload({ onUpload, currentImage }) {
       />
       <label htmlFor="profile-image">
         <Image
-          src={preview || currentImage || profileImage || placeholderImage}
+          src={preview || currentImageUrl || placeholderImage}
           alt="Profile image"
           width={100}
           height={100}
           objectFit="cover"
         />
       </label>
-      <button onClick={handleButtonClick}>
-        {notification ? "Uploaded" : "Upload image"}
-      </button>
-      {notification && <div className="imageNotification">{notification}</div>}
+      {(preview || currentImageUrl) && (
+        <div className="cross-icon" onClick={handleRemoveImage}>
+          &times;
+        </div>
+      )}
     </div>
   );
 }

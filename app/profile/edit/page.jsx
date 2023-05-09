@@ -1,26 +1,29 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
 import {
-  setDoc,
+  getDoc,
   doc,
   collection,
   query,
   where,
   getDocs,
-  getDoc,
+  setDoc,
+  updateDoc, // Add this import
 } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 import { auth, db } from "../../../src/firebase/config";
 import ImageUpload from "../../components/ImageUpload";
 
 export default function EditProfile() {
+  const [selectedImage, setSelectedImage] = useState(null);
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [notification, setNotification] = useState("");
   const [user, setUser] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export default function EditProfile() {
           if (userDoc.exists()) {
             setDisplayName(userDoc.data().displayName);
             setUsername(userDoc.data().username);
+            setImageUrl(userDoc.data().profile_image); // Add this line
           }
         } catch (error) {
           console.error("Error fetching user data:", error.message);
@@ -55,71 +59,101 @@ export default function EditProfile() {
     fetchUserData();
   }, [user]);
 
-  const handleImageUpload = async (url) => {
-    setIsUploading(true);
-    try {
+  const handleImageUpload = async (image) => {
+    if (image) {
       const storageRef = ref(
-        storage,
-        `users/${auth.currentUser.uid}/profile.jpg`
+        getStorage(),
+        `profile_images/${auth.currentUser.uid}_profile.jpg`
       );
-      await uploadString(storageRef, url, "data_url");
-      setImageUrl(url);
-      setNotification("Uploaded.");
-      setTimeout(() => setNotification(""), 3000);
-    } catch (error) {
-      console.error("Error uploading image:", error.message);
-      setNotification("Error uploading image.");
-      setTimeout(() => setNotification(""), 3000);
-    } finally {
-      setIsUploading(false);
+      try {
+        await uploadBytes(storageRef, image);
+        const downloadURL = await getDownloadURL(storageRef);
+        console.log("Image uploaded successfully:", downloadURL);
+
+        // Update Firestore document with image URL
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, { profile_image: downloadURL });
+        console.log("Profile image URL updated in Firestore");
+        return { success: true, url: downloadURL };
+      } catch (error) {
+        console.error("Error uploading image:", error.message);
+        console.error("Error object:", error); // Add this line for more information
+        return { success: false };
+      }
+    } else {
+      console.log("No image selected.");
+      return { success: false };
     }
   };
 
   const submitProfile = async (e) => {
     e.preventDefault();
+    setNotification("Saving...");
 
     try {
+      // Upload the selected image and get the download URL
+      let newProfileImageUrl = imageUrl;
+      if (selectedImage === null && imageUrl) {
+        // Remove the image from the database
+        const docRef = doc(db, "users", auth.currentUser.uid);
+        await setDoc(docRef, { profile_image: null }, { merge: true });
+        console.log("Profile image removed from the database.");
+      } else if (selectedImage) {
+        // Upload the new image
+        const success = await handleImageUpload(selectedImage);
+        if (success) {
+          newProfileImageUrl = success.url;
+        } else {
+          setNotification("Error uploading image.");
+          setTimeout(() => setNotification(""), 3000);
+          return;
+        }
+      }
+
       const usersRef = collection(db, "users");
       const q = query(usersRef, where("username", "==", username));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty || querySnapshot.docs[0].id === user.uid) {
         console.log("Updating profile...");
-        setNotification("Saving...");
-        setIsUploading(true);
+
         const docRef = doc(db, "users", auth.currentUser.uid);
         await setDoc(
           docRef,
           {
             displayName,
             username,
-            imageUrl,
+            profile_image: newProfileImageUrl || null,
           },
           { merge: true }
         );
         console.log("Profile updated successfully.");
         setNotification("Updated.");
-        setImageUrl(null);
         setTimeout(() => setNotification(""), 3000);
-        setIsUploading(false);
       } else {
         setNotification("This username is already taken.");
         setTimeout(() => setNotification(""), 3000);
       }
     } catch (error) {
       console.error("Error updating profile:", error.message);
+      setNotification("Error updating profile.");
+      setTimeout(() => setNotification(""), 3000);
     }
   };
 
   const handleBack = () => {
     router.back();
   };
+
   return (
     <div>
       <h1>Edit Profile</h1>
       <form onSubmit={submitProfile}>
         <br />
-        <ImageUpload onUpload={handleImageUpload} />
+        <ImageUpload
+          onImageSelect={setSelectedImage}
+          currentImageUrl={imageUrl} // Add this prop
+        />
         <br />
         <input
           type="text"
@@ -134,13 +168,8 @@ export default function EditProfile() {
           onChange={(e) => setUsername(e.target.value)}
           required
         />
-        <button
-          type="submit"
-          disabled={isUploading || notification === "Saving..."}
-        >
-          {isUploading || notification === "Saving..."
-            ? "Saving..."
-            : "Save Profile"}
+        <button type="submit" disabled={notification === "Saving..."}>
+          {notification === "Saving..." ? "Saving..." : "Save Profile"}
         </button>
         <button type="button" onClick={handleBack}>
           Back

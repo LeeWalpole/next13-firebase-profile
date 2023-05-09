@@ -507,3 +507,20 @@
   background: lightgray;
   border-radius: 5px;
 }
+
+/* Image Componet*/
+
+.cross-icon {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 20px;
+  font-size: 16px;
+  cursor: pointer;
+}

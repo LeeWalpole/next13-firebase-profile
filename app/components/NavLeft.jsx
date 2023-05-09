@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Modal from "../components/Modal";
 import { useModal } from "./ModalUse";
+import placeholderImage from "../../public/placeholder.png";
 
 const NavLeft = () => {
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -22,12 +23,7 @@ const NavLeft = () => {
         <ul>
           <li className="nav-left-logo">
             <Link href="/">
-              <Image
-                src="https://bubblybeaks.com/wp-content/uploads/BubblyBeaks-Logo-2022-black.png"
-                alt=""
-                height={32}
-                width={215}
-              />
+              <Image src={placeholderImage} alt="" height={100} width={40} />
             </Link>
           </li>
 
