@@ -1,24 +1,23 @@
-"use client";
 import { useState, useEffect } from "react";
-import { getDoc, doc } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
+import { doc, getDoc } from "firebase/firestore";
 
-export default function useProfileImage() {
-  const [profileImage, setProfileImage] = useState(""); // new state variable to store profile image URL
+export const useProfileImage = () => {
+  const [profileImage, setProfileImage] = useState("");
+  const [profileImageTimestamp, setProfileImageTimestamp] = useState(
+    Date.now()
+  );
 
-  // effect to get the profile image URL from Firestore
   useEffect(() => {
     const fetchProfileImage = async () => {
       try {
         if (auth.currentUser) {
-          // check if the user is logged in
           const userRef = doc(db, "users", auth.currentUser.uid);
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
-            const { profile_image } = userDoc.data();
-            if (profile_image) {
-              setProfileImage(profile_image);
-            }
+            const { profile_image } = userDoc.data() || {};
+            setProfileImage(profile_image || "");
+            setProfileImageTimestamp(Date.now());
           }
         }
       } catch (error) {
@@ -27,12 +26,7 @@ export default function useProfileImage() {
     };
 
     fetchProfileImage();
-  }, []);
+  }, [profileImageTimestamp]);
 
-  return {
-    profileImage,
-    setProfileImage,
-  };
-}
-
-// In the component that renders the image upload form
+  return { profileImage, setProfileImageTimestamp };
+};

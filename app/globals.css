@@ -499,3 +499,11 @@
 }
 
 /* Image container */
+.imageNotification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  background: lightgray;
+  border-radius: 5px;
+}

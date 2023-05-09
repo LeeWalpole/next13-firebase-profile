@@ -1,41 +1,21 @@
 "use client";
-import { getStorage, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState, useEffect } from "react";
-import { auth, db } from "../../src/firebase/config";
-import { updateDoc, doc, getDoc } from "firebase/firestore";
-import placeholderImage from "../../public/placeholder.png";
 import Image from "next/image";
-import { ref } from "@firebase/storage";
+import placeholderImage from "../../public/placeholder.png";
+import { useProfileImage } from "../../src/hooks/useProfileImage";
+import { useImageUpload } from "../../src/hooks/useImageUpload";
 
 export default function ImageUpload({ onUpload, currentImage }) {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [notification, setNotification] = useState("");
-  const [profileImage, setProfileImage] = useState("");
-  const [profileImageTimestamp, setProfileImageTimestamp] = useState(
-    Date.now()
-  );
-
-  // effect to get the profile image URL from Firestore
-  useEffect(() => {
-    const fetchProfileImage = async () => {
-      try {
-        if (auth.currentUser) {
-          const userRef = doc(db, "users", auth.currentUser.uid);
-          const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const { profile_image } = userDoc.data() || {};
-            setProfileImage(profile_image || "");
-            setProfileImageTimestamp(Date.now());
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching profile image:", error.message);
-      }
-    };
-
-    fetchProfileImage();
-  }, [profileImageTimestamp]);
+  const { profileImage, setProfileImageTimestamp } = useProfileImage();
+  const { handleImageUpload } = useImageUpload((downloadURL) => {
+    onUpload(downloadURL);
+    setProfileImageTimestamp(Date.now());
+    setNotification("Profile image updated.");
+    setTimeout(() => setNotification(""), 3000);
+  });
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -49,34 +29,12 @@ export default function ImageUpload({ onUpload, currentImage }) {
     }
   };
 
-  const handleImageUpload = async (e) => {
+  const handleButtonClick = async (e) => {
     e.preventDefault();
-    if (image) {
-      const storageRef = ref(
-        getStorage(),
-        `profile_images/${auth.currentUser.uid}_profile.jpg`
-      );
-      try {
-        setNotification("Uploading image...");
-        await uploadBytes(storageRef, image);
-        const downloadURL = await getDownloadURL(storageRef);
-        console.log("Image uploaded successfully:", downloadURL);
-
-        // Update Firestore document with image URL
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userRef, { profile_image: downloadURL });
-        console.log("Profile image URL updated in Firestore");
-        onUpload(downloadURL);
-
-        // Show 'Profile image updated' message
-        setNotification("Profile image updated.");
-        setTimeout(() => setNotification(""), 3000);
-      } catch (error) {
-        console.error("Error uploading image:", error.message);
-        setNotification("Upload failed.");
-      }
-    } else {
-      console.log("No image selected.");
+    setNotification("Uploading image...");
+    const success = await handleImageUpload(image);
+    if (!success) {
+      setNotification("Upload failed.");
     }
   };
 
@@ -98,23 +56,10 @@ export default function ImageUpload({ onUpload, currentImage }) {
           objectFit="cover"
         />
       </label>
-      <button onClick={handleImageUpload}>
+      <button onClick={handleButtonClick}>
         {notification ? "Uploaded" : "Upload image"}
       </button>
-      {notification && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            padding: "10px",
-            background: "lightgray",
-            borderRadius: "5px",
-          }}
-        >
-          {notification}
-        </div>
-      )}
+      {notification && <div className="imageNotification">{notification}</div>}
     </div>
   );
 }
