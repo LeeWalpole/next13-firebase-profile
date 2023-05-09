@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../../src/firebase/config";
 import { doc, getDoc } from "firebase/firestore";
 import { AuthButton } from "../components/AuthButton";
+import Header from "../components/Header";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -39,6 +40,13 @@ export default function Dashboard() {
       <header>
         <AuthButton />
       </header>
+
+      <Header
+        title="Dashboard Here"
+        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+        className="custom-header"
+      />
+
       <h1>Dashboard!</h1>
       <h1>Hello {user.username}!</h1>
       <p>This is your {user.email}</p>
