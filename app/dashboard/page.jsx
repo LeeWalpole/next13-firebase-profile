@@ -36,10 +36,12 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1>Dashboard</h1>
+      <header>
+        <AuthButton />
+      </header>
+      <h1>Dashboard!</h1>
       <h1>Hello {user.username}!</h1>
       <p>This is your {user.email}</p>
-      <AuthButton />
     </div>
   );
 }
