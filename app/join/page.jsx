@@ -1,13 +1,32 @@
 "use client";
-import { auth, provider, db } from "../src/firebase/config";
-import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, provider, db } from "../../src/firebase/config";
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
-import { useState } from "react";
-import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+import { AuthButton } from "../components/AuthButton";
 
 export default function Join() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/dashboard");
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [router]);
 
   const registerWithEmail = async (e) => {
     e.preventDefault();
@@ -19,7 +38,7 @@ export default function Join() {
         password
       );
       await addDoc(collection(db, "users"), { uid: userCredential.user.uid });
-      router.push("/create-profile");
+      router.push("/profile");
     } catch (error) {
       console.error("Error signing up:", error.message);
     }
@@ -29,7 +48,7 @@ export default function Join() {
     try {
       const userCredential = await signInWithPopup(auth, provider);
       await addDoc(collection(db, "users"), { uid: userCredential.user.uid });
-      router.push("/create-profile");
+      router.push("/profile");
     } catch (error) {
       console.error("Error signing up with Google:", error.message);
     }
@@ -37,6 +56,7 @@ export default function Join() {
 
   return (
     <div>
+      <AuthButton />
       <h1>Home</h1>
       <form onSubmit={registerWithEmail}>
         <input
