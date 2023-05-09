@@ -70,7 +70,7 @@ export default function CreateProfile() {
           { merge: true }
         );
 
-        router.push("/dashboard");
+        router.push("/profile");
       } else {
         setError("This username is already taken.");
       }

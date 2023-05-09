@@ -6,7 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { AuthButton } from "../components/AuthButton";
 
-export default function Dashboard() {
+export default function Profile() {
   const [user, setUser] = useState(null);
   const router = useRouter();
 
@@ -16,7 +16,7 @@ export default function Dashboard() {
         const userDoc = await getDoc(doc(db, "users", user.uid));
 
         if (!userDoc.exists || !userDoc.data() || !userDoc.data().username) {
-          router.push("/profile");
+          router.push("/profile/edit");
         } else {
           setUser(userDoc.data());
         }

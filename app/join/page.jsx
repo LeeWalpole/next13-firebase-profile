@@ -1,4 +1,5 @@
 "use client";
+// Import required modules and components
 import { auth, provider, db } from "../../src/firebase/config";
 import {
   createUserWithEmailAndPassword,
@@ -8,18 +9,19 @@ import {
 import { collection, addDoc } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { AuthButton } from "../components/AuthButton";
 
 export default function Join() {
+  // Declare state variables for email and password
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
+  // Redirect user to /profile page if they are already authenticated
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.push("/dashboard");
+        router.push("/profile");
       }
     });
 
@@ -28,6 +30,7 @@ export default function Join() {
     };
   }, [router]);
 
+  // Register new user with email and password
   const registerWithEmail = async (e) => {
     e.preventDefault();
 
@@ -38,22 +41,26 @@ export default function Join() {
         password
       );
       await addDoc(collection(db, "users"), { uid: userCredential.user.uid });
-      router.push("/profile");
+      // Redirect user to /profile/edit after successful registration
+      router.push("/profile/edit");
     } catch (error) {
       console.error("Error signing up:", error.message);
     }
   };
 
+  // Register new user with Google
   const registerWithGoogle = async () => {
     try {
       const userCredential = await signInWithPopup(auth, provider);
       await addDoc(collection(db, "users"), { uid: userCredential.user.uid });
-      router.push("/profile");
+      // Redirect user to /profile/edit after successful registration
+      router.push("/profile/edit");
     } catch (error) {
       console.error("Error signing up with Google:", error.message);
     }
   };
 
+  // Render the component
   return (
     <div>
       <AuthButton />
