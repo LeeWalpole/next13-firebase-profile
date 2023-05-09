@@ -18,11 +18,11 @@ export default function EditProfile() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [notification, setNotification] = useState("");
-  const [user, setUser] = useState(null);
-  const [imageUrl, setImageUrl] = useState(null);
+  const [user, setUser] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
-  // Check if user is authenticated and redirect to login if not
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -37,7 +37,6 @@ export default function EditProfile() {
     };
   }, [router]);
 
-  // Fetch user data from Firestore
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
@@ -46,7 +45,6 @@ export default function EditProfile() {
           if (userDoc.exists()) {
             setDisplayName(userDoc.data().displayName);
             setUsername(userDoc.data().username);
-            setImageUrl(userDoc.data().profile_image); // Get the profile image URL from Firestore
           }
         } catch (error) {
           console.error("Error fetching user data:", error.message);
@@ -57,12 +55,26 @@ export default function EditProfile() {
     fetchUserData();
   }, [user]);
 
-  // Handle the image upload and set the image URL in state
-  const handleImageUpload = (url) => {
-    setImageUrl(url);
+  const handleImageUpload = async (url) => {
+    setIsUploading(true);
+    try {
+      const storageRef = ref(
+        storage,
+        `users/${auth.currentUser.uid}/profile.jpg`
+      );
+      await uploadString(storageRef, url, "data_url");
+      setImageUrl(url);
+      setNotification("Uploaded.");
+      setTimeout(() => setNotification(""), 3000);
+    } catch (error) {
+      console.error("Error uploading image:", error.message);
+      setNotification("Error uploading image.");
+      setTimeout(() => setNotification(""), 3000);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  // Handle form submission
   const submitProfile = async (e) => {
     e.preventDefault();
 
@@ -72,18 +84,24 @@ export default function EditProfile() {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty || querySnapshot.docs[0].id === user.uid) {
+        console.log("Updating profile...");
+        setNotification("Saving...");
+        setIsUploading(true);
+        const docRef = doc(db, "users", auth.currentUser.uid);
         await setDoc(
-          doc(db, "users", auth.currentUser.uid),
+          docRef,
           {
             displayName,
             username,
-            profile_image: imageUrl, // Save the profile image URL in Firestore
+            imageUrl,
           },
           { merge: true }
         );
-
-        setNotification("Profile updated successfully.");
+        console.log("Profile updated successfully.");
+        setNotification("Updated.");
+        setImageUrl(null);
         setTimeout(() => setNotification(""), 3000);
+        setIsUploading(false);
       } else {
         setNotification("This username is already taken.");
         setTimeout(() => setNotification(""), 3000);
@@ -93,7 +111,6 @@ export default function EditProfile() {
     }
   };
 
-  // Handle "Back" button click
   const handleBack = () => {
     router.back();
   };
@@ -102,29 +119,29 @@ export default function EditProfile() {
       <h1>Edit Profile</h1>
       <form onSubmit={submitProfile}>
         <br />
-        {/* Render the ImageUpload component with currentImage prop set to imageUrl */}
-        <ImageUpload onUpload={handleImageUpload} currentImage={imageUrl} />
+        <ImageUpload onUpload={handleImageUpload} />
         <br />
-        <label>
-          Display Name:
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Username:
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit">Update</button>
+        <input
+          type="text"
+          value={displayName ?? ""}
+          onChange={(e) => setDisplayName(e.target.value)}
+          required
+        />
+
+        <input
+          type="text"
+          value={username ?? ""}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <button
+          type="submit"
+          disabled={isUploading || notification === "Saving..."}
+        >
+          {isUploading || notification === "Saving..."
+            ? "Saving..."
+            : "Save Profile"}
+        </button>
         <button type="button" onClick={handleBack}>
           Back
         </button>

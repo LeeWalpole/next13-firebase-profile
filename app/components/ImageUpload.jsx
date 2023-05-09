@@ -1,21 +1,41 @@
 "use client";
+import { getStorage, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useState, useEffect } from "react";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db } from "../../src/firebase/config";
 import { updateDoc, doc, getDoc } from "firebase/firestore";
 import placeholderImage from "../../public/placeholder.png";
 import Image from "next/image";
+import { ref } from "@firebase/storage";
 
 export default function ImageUpload({ onUpload, currentImage }) {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [notification, setNotification] = useState("");
+  const [profileImage, setProfileImage] = useState("");
+  const [profileImageTimestamp, setProfileImageTimestamp] = useState(
+    Date.now()
+  );
 
+  // effect to get the profile image URL from Firestore
   useEffect(() => {
-    if (currentImage) {
-      setPreview(currentImage);
-    }
-  }, [currentImage]);
+    const fetchProfileImage = async () => {
+      try {
+        if (auth.currentUser) {
+          const userRef = doc(db, "users", auth.currentUser.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const { profile_image } = userDoc.data() || {};
+            setProfileImage(profile_image || "");
+            setProfileImageTimestamp(Date.now());
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching profile image:", error.message);
+      }
+    };
+
+    fetchProfileImage();
+  }, [profileImageTimestamp]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -32,12 +52,12 @@ export default function ImageUpload({ onUpload, currentImage }) {
   const handleImageUpload = async (e) => {
     e.preventDefault();
     if (image) {
+      const storageRef = ref(
+        getStorage(),
+        `profile_images/${auth.currentUser.uid}_profile.jpg`
+      );
       try {
-        console.log("Uploading image...");
         setNotification("Uploading image...");
-        const storage = getStorage();
-        const filePath = `${auth.currentUser.uid}_profile.jpg`;
-        const storageRef = ref(storage, `profile_images/${filePath}`);
         await uploadBytes(storageRef, image);
         const downloadURL = await getDownloadURL(storageRef);
         console.log("Image uploaded successfully:", downloadURL);
@@ -53,6 +73,7 @@ export default function ImageUpload({ onUpload, currentImage }) {
         setTimeout(() => setNotification(""), 3000);
       } catch (error) {
         console.error("Error uploading image:", error.message);
+        setNotification("Upload failed.");
       }
     } else {
       console.log("No image selected.");
@@ -69,38 +90,16 @@ export default function ImageUpload({ onUpload, currentImage }) {
         id="profile-image"
       />
       <label htmlFor="profile-image">
-        {preview ? (
-          <Image
-            src={preview}
-            alt="Profile preview"
-            width={100}
-            height={100}
-            objectFit="cover"
-          />
-        ) : currentImage ? (
-          <Image
-            src={currentImage}
-            alt="Current profile image"
-            width={100}
-            height={100}
-            objectFit="cover"
-          />
-        ) : (
-          <Image
-            src={placeholderImage}
-            alt="Default profile image"
-            width={100}
-            height={100}
-            objectFit="cover"
-          />
-        )}
+        <Image
+          src={preview || currentImage || profileImage || placeholderImage}
+          alt="Profile image"
+          width={100}
+          height={100}
+          objectFit="cover"
+        />
       </label>
       <button onClick={handleImageUpload}>
-        {image
-          ? notification
-            ? "Uploaded"
-            : "Uploading..."
-          : "Change Profile Pic"}
+        {notification ? "Uploaded" : "Upload image"}
       </button>
       {notification && (
         <div
