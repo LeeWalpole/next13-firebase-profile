@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1>Profile</h1>
+      <h1>Profile Page</h1>
       <h1>Hello {user.username}!</h1>
       <p>This is your {user.email}</p>
       <AuthButton />
