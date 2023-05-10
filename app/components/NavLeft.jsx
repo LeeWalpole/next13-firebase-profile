@@ -47,7 +47,7 @@ const NavLeft = () => {
           </li>
 
           <li>
-            <Link href="/profile/sort/">Gallery</Link>
+            <Link href="/profile/gallery/">Gallery</Link>
           </li>
 
           <li className={pathname == "/" ? "active-nav-left" : ""}>
