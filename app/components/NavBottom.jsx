@@ -146,6 +146,29 @@ export default function NavBottom() {
               <button onClick={() => toggleModal("modal-3")}>
                 Open Modal 3
               </button>
+
+              <li>
+                <Link href="/join">1. Join</Link>
+              </li>
+              <li>
+                <Link href="/profile/create">2. Create Profile</Link>
+              </li>
+
+              <li>
+                <Link href="/profile">3. Profile (Welcome)</Link>
+              </li>
+
+              <li>
+                <Link href="/profile/edit/">4. Edit Profile</Link>
+              </li>
+
+              <li>
+                <Link href="/profile/sort/">Sort</Link>
+              </li>
+
+              <li>
+                <Link href="/profile/sort/">Gallery</Link>
+              </li>
             </Modal>
 
             <Modal
