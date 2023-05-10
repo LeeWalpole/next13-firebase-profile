@@ -167,7 +167,7 @@ export default function NavBottom() {
               </li>
 
               <li>
-                <Link href="/profile/sort/">Gallery</Link>
+                <Link href="/profile/gallery/">Gallery</Link>
               </li>
             </Modal>
 
