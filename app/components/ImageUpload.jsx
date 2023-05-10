@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import placeholderImage from "../../public/placeholder.png";
 
-export default function ImageUpload({ onImageSelect, currentImageUrl }) {
+export default function ImageUpload({
+  onImageSelect,
+  currentImageUrl,
+  onRemoveImage,
+}) {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
@@ -40,6 +44,9 @@ export default function ImageUpload({ onImageSelect, currentImageUrl }) {
     if (typeof onImageSelect === "function") {
       onImageSelect(null);
     }
+    if (typeof onRemoveImage === "function") {
+      onRemoveImage();
+    }
   };
 
   return (
@@ -48,6 +55,7 @@ export default function ImageUpload({ onImageSelect, currentImageUrl }) {
         type="file"
         accept="image/*"
         onChange={handleImageChange}
+        onClick={(e) => e.stopPropagation()}
         style={{ display: "none" }}
         id="profile-image"
       />

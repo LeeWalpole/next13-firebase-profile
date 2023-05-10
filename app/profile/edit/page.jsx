@@ -12,7 +12,13 @@ import {
   setDoc,
   updateDoc, // Add this import
 } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 import { auth, db } from "../../../src/firebase/config";
 import ImageUpload from "../../components/ImageUpload";
@@ -59,7 +65,22 @@ export default function EditProfile() {
     fetchUserData();
   }, [user]);
 
-  const handleImageUpload = async (image) => {
+  const handleImageUpload = async (image, removeExisting) => {
+    if (removeExisting) {
+      // Remove the existing profile image from Firebase storage
+      const storageRef = ref(
+        getStorage(),
+        `profile_images/${auth.currentUser.uid}_profile.jpg`
+      );
+      try {
+        await deleteObject(storageRef);
+        console.log("Profile image removed from the storage.");
+      } catch (error) {
+        console.error("Error removing image from storage:", error.message);
+        return { success: false };
+      }
+    }
+
     if (image) {
       const storageRef = ref(
         getStorage(),
@@ -83,6 +104,19 @@ export default function EditProfile() {
     } else {
       console.log("No image selected.");
       return { success: false };
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    setSelectedImage(null);
+    const success = await handleImageUpload(null, true);
+    if (success) {
+      setImageUrl(null);
+
+      // Update Firestore document with null image URL
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, { profile_image: null });
+      console.log("Profile image URL removed from Firestore");
     }
   };
 
@@ -152,7 +186,8 @@ export default function EditProfile() {
         <br />
         <ImageUpload
           onImageSelect={setSelectedImage}
-          currentImageUrl={imageUrl} // Add this prop
+          currentImageUrl={imageUrl}
+          onRemoveImage={handleRemoveImage} // Add this prop
         />
         <br />
         <input
