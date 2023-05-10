@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import SortableList, { SortableItem } from "react-easy-sort";
 import arrayMove from "array-move";
 
@@ -14,9 +15,15 @@ const placeholders = [
   { id: 9, image: "https://via.placeholder.com/150" },
 ];
 
-const SortableImageGrid = ({ items, onSortEnd }) => {
+const SortableImageGrid = () => {
+  const [items, setItems] = useState(placeholders);
+
   const handleImageSelect = (index, file) => {
     // handle image select here
+  };
+
+  const onSortEnd = (oldIndex, newIndex) => {
+    setItems(arrayMove(items, oldIndex, newIndex));
   };
 
   return (
@@ -25,7 +32,7 @@ const SortableImageGrid = ({ items, onSortEnd }) => {
       className="sortable_list"
       draggedItemClassName="sortable_dragged"
     >
-      {placeholders.map(({ id, image }) => (
+      {items.map(({ id, image }) => (
         <SortableItem key={id}>
           <div
             className="sortable_item"

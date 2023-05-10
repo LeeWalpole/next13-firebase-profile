@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import placeholderImage from "../../public/placeholder.png";
 
-export default function ImageUpload({ onImageSelect, currentImageUrl }) {
+export default function GalleryUpload({
+  onImageSelect,
+  currentImageUrl,
+  imageIndex,
+}) {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
@@ -25,7 +29,7 @@ export default function ImageUpload({ onImageSelect, currentImageUrl }) {
       };
       reader.readAsDataURL(file);
       if (typeof onImageSelect === "function") {
-        onImageSelect(file);
+        onImageSelect(file, imageIndex);
       }
     } else {
       setPreview(null);
@@ -38,7 +42,7 @@ export default function ImageUpload({ onImageSelect, currentImageUrl }) {
   const handleRemoveImage = () => {
     setPreview(null);
     if (typeof onImageSelect === "function") {
-      onImageSelect(null);
+      onImageSelect(null, imageIndex);
     }
   };
 
@@ -50,9 +54,12 @@ export default function ImageUpload({ onImageSelect, currentImageUrl }) {
         onChange={handleImageChange}
         onClick={(e) => e.stopPropagation()}
         style={{ display: "none" }}
-        id="profile-image"
+        id={`profile-image-${imageIndex}`} // Update this line
       />
-      <label htmlFor="profile-image">
+
+      <label htmlFor={`profile-image-${imageIndex}`}>
+        {" "}
+        {/* Update this line */}
         <Image
           src={preview || currentImageUrl || placeholderImage}
           alt="Profile image"
@@ -61,6 +68,7 @@ export default function ImageUpload({ onImageSelect, currentImageUrl }) {
           objectFit="cover"
         />
       </label>
+
       {(preview || currentImageUrl) && (
         <div className="cross-icon" onClick={handleRemoveImage}>
           &times;

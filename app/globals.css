@@ -542,6 +542,8 @@
   cursor: grab;
   font-size: 20px;
   user-select: none;
+  width: 150px;
+  height: 150px;
 }
 
 .sortable_dragged {
@@ -552,4 +554,15 @@
   .sortable_list {
     grid-gap: 24px;
   }
+}
+
+.sortable-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 10px;
+}
+
+.sortable-grid img {
+  width: 100%;
+  height: auto;
 }
