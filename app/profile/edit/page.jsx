@@ -65,7 +65,7 @@ export default function EditProfile() {
     fetchUserData();
   }, [user]);
 
-  const handleImageUpload = async (image, removeExisting) => {
+  const handleImageUpload = async (image, imageIndex, removeExisting) => {
     if (removeExisting) {
       // Remove the existing profile image from Firebase storage
       const storageRef = ref(
